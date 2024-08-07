@@ -1,0 +1,70 @@
+version: "3"
+
+services:
+  wtgbot:
+    container_name: wtgbot
+    stdin_open: true # docker run -i
+    tty: true        # docker run -t
+    command: python3 bot/bot.py
+    restart: always
+    build:
+      context: "."
+      dockerfile: Dockerfile
+    environment:
+      RABBITMQ_HOSTNAME: ${RABBITMQ_HOSTNAME}
+      RABBITMQ_USERNAME: ${RABBITMQ_USERNAME}
+      RABBITMQ_PASSWORD: ${RABBITMQ_PASSWORD}
+      ASSIGNING_TASKS_RABBITMQ_QUEUE_NAME: ${ASSIGNING_TASKS_RABBITMQ_QUEUE_NAME}
+      TASKS_REPORTS_RABBITMQ_QUEUE_NAME: ${TASKS_REPORTS_RABBITMQ_QUEUE_NAME}
+      MINIO_ACCESS_KEY: ${MINIO_ACCESS_KEY}
+      MINIO_SECRET_KEY: ${MINIO_SECRET_KEY}
+      MINIO_BUCKET_NAME: ${MINIO_BUCKET_NAME}
+    networks:
+      - backend
+      - frontend
+    volumes:
+      - ./:/code
+
+  
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: rabbitmq
+    restart: always
+    ports:
+      - 5672:5672
+      - 15672:15672
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USERNAME:-rabbitmq_username}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD:-rabbitmq_password}
+    networks:
+      - backend
+      - frontend
+
+  minio:
+    image: minio/minio
+    container_name: minio
+    restart: always
+    volumes:
+      - minio_data:/data
+    ports:
+      - 9000:9000
+      - 9001:9001
+    command: server --address ":9000" --console-address ":9001" /data
+    environment:
+      MINIO_ACCESS_KEY: ${MINIO_ACCESS_KEY:-minio}
+      MINIO_SECRET_KEY: ${MINIO_SECRET_KEY:-minio123}
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-minio}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-minio123}
+    networks:
+      - backend
+      - frontend
+
+volumes:
+  minio_data:
+  
+networks:
+  backend:
+    external: true
+    name: chatgpt_tg_bot_back-tier # we use ChatGPT infrastructure: mongodb, and backbone network
+  frontend:
+    name: whisper_tg_bot_front-tier

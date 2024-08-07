@@ -1,0 +1,4 @@
+telegram_token: "your_telegram_token"
+allowed_telegram_usernames: ["user1", "user2"]
+n_transcription_langs_per_page: 5
+enable_message_streaming: true  # if set, messages will be shown to user word-by-word
