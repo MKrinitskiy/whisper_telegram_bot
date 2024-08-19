@@ -2,7 +2,8 @@ version: "3"
 
 services:
   wtgbot:
-    container_name: wtgbot
+    image: wtg-tgbot
+    container_name: wtg-tgbot
     stdin_open: true # docker run -i
     tty: true        # docker run -t
     command: python3 bot/bot.py
@@ -16,6 +17,8 @@ services:
       RABBITMQ_PASSWORD: ${RABBITMQ_PASSWORD}
       ASSIGNING_TASKS_RABBITMQ_QUEUE_NAME: ${ASSIGNING_TASKS_RABBITMQ_QUEUE_NAME}
       TASKS_REPORTS_RABBITMQ_QUEUE_NAME: ${TASKS_REPORTS_RABBITMQ_QUEUE_NAME}
+      MINIO_HOSTNAME: ${MINIO_HOSTNAME:-minio}
+      MINIO_PORT: ${MINIO_PORT:-9000}
       MINIO_ACCESS_KEY: ${MINIO_ACCESS_KEY}
       MINIO_SECRET_KEY: ${MINIO_SECRET_KEY}
       MINIO_BUCKET_NAME: ${MINIO_BUCKET_NAME}
@@ -24,11 +27,12 @@ services:
       - frontend
     volumes:
       - ./:/code
+    external_links:
+      - mongo
 
-  
   rabbitmq:
     image: rabbitmq:3-management
-    container_name: rabbitmq
+    container_name: wtg-rabbitmq
     restart: always
     ports:
       - 5672:5672
@@ -40,9 +44,10 @@ services:
       - backend
       - frontend
 
+
   minio:
     image: minio/minio
-    container_name: minio
+    container_name: wtg-minio
     restart: always
     volumes:
       - minio_data:/data
@@ -65,6 +70,6 @@ volumes:
 networks:
   backend:
     external: true
-    name: chatgpt_tg_bot_back-tier # we use ChatGPT infrastructure: mongodb, and backbone network
+    name: cgptg-back-tier # we use ChatGPT infrastructure: mongodb, and backbone network
   frontend:
-    name: whisper_tg_bot_front-tier
+    name: wtg-front-tier

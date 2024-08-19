@@ -16,6 +16,7 @@ RUN \
     curl \
     unzip \
     zip \
+    tk \
     ; \
     rm -rf /var/lib/apt/lists/*
 

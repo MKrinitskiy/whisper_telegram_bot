@@ -1,4 +1,5 @@
 from typing import Optional, Any
+from telegram import Update
 
 import pymongo
 import uuid
@@ -78,30 +79,52 @@ class Database:
             self.user_collection.insert_one(user_dict)
 
        
-    def start_new_task(self, user_id: int, message_id: int, filename: str):
-        self.check_if_user_exists(user_id, raise_exception=True)
-
-        task_id = str(uuid.uuid4())
-        task_dict = {
-            "_id": task_id,
-            "user_id": user_id,
-            "transcription_lang": self.get_user_attribute(user_id, "current_transcription_lang"),
-            "filename": filename,
-            "start_time": datetime.now(),
-            "status": "queued",
-            "message_id": None,
-        }
+    def register_new_task(self, task_description_dict: dict, tg_update: Update):
+        self.check_if_user_exists(task_description_dict["user_id"], raise_exception=True)
 
         # add new dialog
-        self.dialog_collection.insert_one(task_dict)
+        task_description_dict['update'] = tg_update.to_dict()
+        self.tasks_collection.insert_one(task_description_dict)
 
         # update user's current dialog
         self.user_collection.update_one(
-            {"_id": user_id},
-            {"$set": {"current_task_id": task_id}}
+            {"_id": task_description_dict["user_id"]},
+            {"$set": {"current_task_id": task_description_dict["task_id"]}}
         )
 
-        return task_id
+        return True
+    
+
+
+    def update_task(self, task_id: str, update_dict: dict):
+        self.tasks_collection.update_one(
+            {"task_id": task_id},
+            {"$set": update_dict}
+        )
+
+
+    def unreguster_task_by_id(self, task_id: str):
+        self.tasks_collection.delete_one({"task_id": task_id})
+
+
+
+    def get_user_current_task(self, user_id: int):
+        self.check_if_user_exists(user_id, raise_exception=True)
+        task_id = self.get_user_attribute(user_id, "current_task_id")
+
+        if task_id is None:
+            return None
+        
+
+        return self.tasks_collection.find_one({"_id": task_id})
+    
+
+
+    def get_user_task_by_id(self, user_id: int, task_id: str):
+        self.check_if_user_exists(user_id, raise_exception=True)
+        
+        return self.tasks_collection.find_one({"task_id": task_id,
+                                               "user_id": user_id})
 
 
 
@@ -119,6 +142,7 @@ class Database:
     def set_user_attribute(self, user_id: int, key: str, value: Any):
         self.check_if_user_exists(user_id, raise_exception=True)
         self.user_collection.update_one({"_id": user_id}, {"$set": {key: value}})
+
 
 
     def set_dialog_messages(self, user_id: int, dialog_messages: list, dialog_id: Optional[str] = None):
