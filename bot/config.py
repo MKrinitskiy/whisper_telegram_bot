@@ -16,6 +16,7 @@ telegram_token = config_yaml["telegram_token"]
 allowed_telegram_usernames = config_yaml["allowed_telegram_usernames"]
 n_transcription_langs_per_page = config_yaml.get("n_transcription_langs_per_page", 6)
 mongodb_uri = f"mongodb://{config_env['MONGODB_HOSTNAME']}:{config_env['MONGODB_PORT']}"
+# telegram_base_url = config_yaml["telegram_base_url"]
 
 # transcription_langs
 with open(config_dir / "transcription_languages.yml", 'r') as f:

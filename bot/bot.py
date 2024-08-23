@@ -700,13 +700,30 @@ def run_bot() -> None:
     application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND & user_filter, message_handle))
     application.add_handler(MessageHandler(filters.PHOTO & ~filters.COMMAND & user_filter, message_handle))
     application.add_handler(MessageHandler(filters.AUDIO & ~filters.COMMAND & user_filter, message_handle_with_audio_file))
-    # application.add_handler(MessageHandler(filters.VIDEO & ~filters.COMMAND & user_filter, message_handle_with_video_file))
+    application.add_handler(MessageHandler(filters.VIDEO & ~filters.COMMAND & user_filter, message_handle_with_audio_file))
     # application.add_handler(MessageHandler(filters.VOICE & user_filter, voice_message_handle))
     
     application.add_handler(MessageHandler(filters.Document.ALL & ~filters.COMMAND & user_filter, unsupport_message_handle))
     
 
     application.add_error_handler(error_handle)
+
+
+    # move the bot from cloud to local
+    # bot_settings = db.get_settings("bot_server")
+    # if bot_settings is None:
+    #     bot_server = 'cloud'
+    #     db.set_setting("bot_server", bot_server)
+    # else:
+    #     bot_server = bot_settings["bot_server"]
+
+    # if bot_server == 'cloud':
+    #     application.bot.log_out()
+    #     application.
+    # else:
+    #     pass
+    
+
 
     departing_tasks_thread = Thread(target=threaded_departing_tasks_rmq_feeder,
                                     args=(departing_thread_killer,

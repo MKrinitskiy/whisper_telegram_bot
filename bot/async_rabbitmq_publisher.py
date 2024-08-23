@@ -358,6 +358,9 @@ class RabbitMQPublisher(object):
                 if (self._connection is not None and
                         not self._connection.is_closed):
                     self._connection.ioloop.start()
+            except Exception as e:
+                self.logger.error('Error while connecting to RMQ: %s', e)
+                continue
 
         self.logger.info('Stopped')
 

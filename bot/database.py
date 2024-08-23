@@ -1,3 +1,4 @@
+from enum import unique
 from typing import Optional, Any
 from telegram import Update
 
@@ -20,15 +21,24 @@ class Database:
 
         self.user_collection = self.db["user"]
         self.tasks_collection = self.db["tasks"]
+        # self.settings_collection = self.db["settings"]
 
         dbnames = self.client.list_database_names()
         if 'whisper_telegram_bot' in dbnames:
             print("whisper_telegram_bot database is present")
+            unique_id = uuid.uuid4().hex
+            self.user_collection.insert_one({"_id": unique_id})
+            self.user_collection.delete_one({"_id": unique_id})
+            self.tasks_collection.insert_one({"task_id": unique_id})
+            self.tasks_collection.delete_one({"task_id": unique_id})
+            # self.settings_collection.insert_one({"_id": unique_id})
+            # self.settings_collection.delete_one({"_id": unique_id})
         else:
             print("whisper_telegram_bot database is not present. Creating one...")
             try:
                 self.user_collection.insert_one({})
                 self.tasks_collection.insert_one({})
+                # self.settings_collection.insert_one({})
 
                 print("Checking if database is present one more time")
                 dbnames = self.client.list_database_names()
@@ -40,6 +50,13 @@ class Database:
             except Exception as e:
                 print(f"Error: {e}")
                 raise ValueError("Database not present")
+
+
+    # def get_settings(self):
+    #     return self.db["settings"].find_one({})
+    
+    # def set_setting(self, key, value):
+    #     self.settings_collection.update_one({}, {"$set": {key: value}})
 
 
     def check_if_user_exists(self, user_id: int, raise_exception: bool = False):
